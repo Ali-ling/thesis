@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#09111f" />
+  <title>星环守卫 · Non-Stationary Arena</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand-lockup">
+        <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div>
+          <p class="eyebrow">NON-STATIONARY RL LAB</p>
+          <h1>星环守卫 <span>/ Non-Stationary Arena</span></h1>
+        </div>
+      </div>
+      <div class="topbar-meta">
+        <div class="protocol-chip"><span class="status-dot"></span><span id="protocolStatus">加载环境协议</span></div>
+        <div class="protocol-version">MDP / 8S × 2A</div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero panel">
+        <div class="hero-copy">
+          <p class="eyebrow accent">可计算真值的游戏化仿真环境</p>
+          <h2>让智能体在星环航线上，<br /><em>学会应对游戏版本变化。</em></h2>
+          <p class="hero-description">每一步都保留状态、动作、奖励和转移。你可以先让策略在旧版本中探索，再注入一场可控的环境变化，观察哪些区域真的需要适应。</p>
+          <div class="hero-tags">
+            <span>有限状态</span><span>双动作</span><span>可复现随机种子</span><span>真实 Q* 真值</span>
+          </div>
+        </div>
+        <div class="hero-orbit" aria-label="环境循环示意">
+          <div class="orbit-ring ring-one"></div>
+          <div class="orbit-ring ring-two"></div>
+          <div class="orbit-core"><span>V0</span><small>→ V1</small></div>
+          <div class="orbit-node node-a">探索</div>
+          <div class="orbit-node node-b">监测</div>
+          <div class="orbit-node node-c">适应</div>
+        </div>
+        <div class="hero-stat-grid">
+          <div class="hero-stat"><span>当前步数</span><strong id="heroStep">0</strong><small>/ <span id="heroHorizon">80</span></small></div>
+          <div class="hero-stat"><span>累计回报</span><strong id="heroReturn">0.0</strong><small>episode</small></div>
+          <div class="hero-stat"><span>决策影响</span><strong id="heroImpact">—</strong><small>I*</small></div>
+        </div>
+      </section>
+
+      <div class="content-grid">
+        <div class="main-column">
+          <section class="panel arena-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">LIVE ARENA</p>
+                <h3>星环航线</h3>
+              </div>
+              <div class="phase-badge phase-base" id="phaseBadge"><span class="phase-light"></span><span id="phaseLabel">V0 旧版本</span></div>
+            </div>
+            <div class="arena-toolbar">
+              <div class="location-copy"><span class="mini-label">当前所在区域</span><strong id="currentLocation">—</strong><span id="currentLocationDescription">等待环境加载</span></div>
+              <div class="telemetry-inline"><span><i class="telemetry-key">奖励</i><b id="lastReward">0.0</b></span><span><i class="telemetry-key">回合步</i><b id="episodeStep">0</b></span><span><i class="telemetry-key">版本</i><b id="versionLabel">V0</b></span></div>
+            </div>
+            <div class="arena-map-wrap">
+              <div class="map-axis-label axis-top">STAR RING ROUTE / 状态转移拓扑</div>
+              <div class="arena-map" id="arenaMap"></div>
+              <div class="map-footer"><span><i class="legend-dot current-dot"></i>当前位置</span><span><i class="legend-dot visited-dot"></i>近期访问</span><span><i class="legend-dot flip-dot"></i>动作偏好翻转</span></div>
+            </div>
+            <div class="action-deck">
+              <div class="action-deck-copy"><span class="mini-label">你的决策</span><strong>为当前区域选择行动</strong><span id="decisionHint">也可以开启自动策略，让智能体自行探索。</span></div>
+              <div class="action-buttons">
+                <button class="action-button action-attack" id="action0Button" type="button"><span class="action-index">A0</span><span class="action-text"><b>脉冲突击</b><small>偏进攻 · 高即时收益</small></span><kbd>1</kbd></button>
+                <button class="action-button action-defend" id="action1Button" type="button"><span class="action-index">A1</span><span class="action-text"><b>相位防守</b><small>偏稳定 · 护盾协议</small></span><kbd>2</kbd></button>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel monitor-panel">
+            <div class="panel-heading monitor-heading">
+              <div>
+                <p class="eyebrow">DECISION MONITOR</p>
+                <h3>决策相关变化监测</h3>
+              </div>
+              <div class="evidence-badge evidence-idle" id="evidenceBadge">等待窗口</div>
+            </div>
+            <div class="monitor-grid">
+              <div class="monitor-main">
+                <div class="impact-readout"><span class="mini-label">真实决策影响比例</span><div><strong id="impactReadout">—</strong><span id="impactReadoutNote">等待足够交互数据</span></div></div>
+                <div class="impact-track"><span id="impactTrackFill"></span><i class="impact-marker marker-low"></i><i class="impact-marker marker-high"></i></div>
+                <div class="impact-scale"><span>低影响 δ₀=<b id="delta0Label">0.20</b></span><span>高影响 δ₁=<b id="delta1Label">0.55</b></span></div>
+              </div>
+              <div class="monitor-side"><div class="metric-row"><span>真实翻转状态</span><b id="truthFlipStates">—</b></div><div class="metric-row"><span>窗口状态</span><b id="windowStatus">0 / 48 步</b></div><div class="metric-row"><span>建议更新</span><b id="updateRecommendation">基础更新</b></div></div>
+            </div>
+            <div class="state-signal-grid" id="stateSignalGrid"></div>
+            <div class="monitor-note"><span class="note-icon">i</span><span id="monitorNote">真实真值来自当前环境模型；窗口估计需要连续交互后才会出现，用于后续接入检测器和 PPO 调度器。</span></div>
+          </section>
+
+          <section class="panel log-panel">
+            <div class="panel-heading compact-heading"><div><p class="eyebrow">EVENT STREAM</p><h3>环境事件</h3></div><button class="text-button" id="clearLogButton" type="button">清空记录</button></div>
+            <div class="event-log" id="eventLog"><div class="empty-log">尚未产生事件。选择一个场景并开始探索。</div></div>
+          </section>
+        </div>
+
+        <aside class="side-column">
+          <section class="panel control-panel">
+            <div class="panel-heading compact-heading"><div><p class="eyebrow">ENVIRONMENT CONTROL</p><h3>实验控制台</h3></div><span class="control-mark">01</span></div>
+            <label class="field-label" for="scenarioSelect">变化场景</label>
+            <select class="select-control" id="scenarioSelect"></select>
+            <p class="field-help" id="scenarioDescription">加载场景说明。</p>
+            <div class="scenario-truth" id="scenarioTruth">真值：—</div>
+            <div class="field-row"><label class="field-label" for="changeStepInput">变化发生步数</label><span class="field-value" id="changeStepValue">48</span></div>
+            <input class="range-control" id="changeStepInput" type="range" min="8" max="140" step="1" value="48" />
+            <div class="range-labels"><span>早</span><span>中</span><span>晚</span></div>
+            <label class="field-label" for="policySelect">自动策略</label>
+            <select class="select-control" id="policySelect">
+              <option value="greedy">贪心策略 · 跟随真实 Q*</option>
+              <option value="epsilon">探索策略 · ε = 0.18</option>
+              <option value="random">随机策略 · 便于制造覆盖</option>
+            </select>
+            <div class="control-actions"><button class="primary-button" id="resetButton" type="button">重置实验</button><button class="secondary-button" id="autoButton" type="button"><span class="play-icon">▶</span><span id="autoButtonLabel">自动运行</span></button></div>
+            <button class="inject-button" id="injectButton" type="button"><span>触发环境更新</span><small>立即将当前版本切换到预设场景</small></button>
+          </section>
+
+          <section class="panel telemetry-panel">
+            <div class="panel-heading compact-heading"><div><p class="eyebrow">RUN TELEMETRY</p><h3>运行遥测</h3></div><span class="live-label"><i></i> LIVE</span></div>
+            <div class="telemetry-list"><div class="telemetry-card"><span class="telemetry-icon icon-state">S</span><div><small>状态编码</small><b id="stateCode">S1</b></div><em id="stateIndex">0</em></div><div class="telemetry-card"><span class="telemetry-icon icon-action">A</span><div><small>上一步动作</small><b id="lastAction">—</b></div><em id="lastActionId">—</em></div><div class="telemetry-card"><span class="telemetry-icon icon-seed">R</span><div><small>随机种子</small><b id="seedLabel">—</b></div><em>固定</em></div></div>
+            <div class="return-chart" id="returnChart"><div class="chart-label"><span>近期回报轨迹</span><b id="chartLatest">—</b></div><div class="bars" id="returnBars"></div></div>
+          </section>
+
+          <section class="panel protocol-panel">
+            <div class="panel-heading compact-heading"><div><p class="eyebrow">ENV PROTOCOL</p><h3>训练接口</h3></div><span class="protocol-mark">API</span></div>
+            <div class="protocol-list"><div><span>状态空间</span><b>Discrete(8)</b></div><div><span>动作空间</span><b>Discrete(2)</b></div><div><span>折扣因子 γ</span><b id="gammaLabel">0.92</b></div><div><span>回合长度</span><b id="horizonLabel">80 steps</b></div></div>
+            <div class="api-callout"><code>obs, reward, done, info = env.step(action)</code><span>Python 环境已同步提供同一套协议。</span></div>
+          </section>
+        </aside>
+      </div>
+    </main>
+
+    <footer class="footer"><span>星环守卫 · 为非平稳强化学习研究搭建的第一版可视化仿真环境</span><span><a href="arena_v2.html">进入深空远征 V2</a> · Protocol <b id="footerProtocol">1.0</b> · <a href="毕业设计.md">研究方案</a></span></footer>
+  </div>
+</body>
+</html>

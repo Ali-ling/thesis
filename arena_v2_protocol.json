@@ -1,0 +1,49 @@
+{
+  "protocol_version": "2.0",
+  "title": "星环守卫 II：深空远征",
+  "subtitle": "Deep Space Expedition",
+  "description": "一个面向 PPO 的部分可观测、随机事件驱动的深空远征环境。智能体需要收集足够资源、管理护盾与能量，并返回星门完成撤离。",
+  "gamma": 0.99,
+  "episode_horizon": 160,
+  "change_step": 720,
+  "gradual_duration": 360,
+  "target_cargo": 5,
+  "initial_shield": 82,
+  "initial_energy": 86,
+  "initial_threat": 12,
+  "seed": 20260916,
+  "default_scenario": "mixed_shift",
+  "route_rewrite_nodes": [3, 7, 9],
+  "node_kinds": ["gate", "relay", "resource", "archive", "storm", "ruins"],
+  "nodes": [
+    {"id": 0, "name": "星门基地", "short": "星门", "kind": "gate", "forward": 1, "reverse": 11, "alternate_forward": 1, "resource_capacity": 0, "base_hazard": 0.015, "tone": "cyan", "brief": "撤离点与补给起点"},
+    {"id": 1, "name": "静默中继", "short": "中继", "kind": "relay", "forward": 2, "reverse": 0, "alternate_forward": 2, "resource_capacity": 0, "base_hazard": 0.055, "tone": "sky", "brief": "低风险的导航中继"},
+    {"id": 2, "name": "晶矿带", "short": "晶矿", "kind": "resource", "forward": 3, "reverse": 1, "alternate_forward": 3, "resource_capacity": 2, "base_hazard": 0.135, "tone": "amber", "brief": "高价值晶体资源区"},
+    {"id": 3, "name": "赤潮风暴", "short": "风暴", "kind": "storm", "forward": 4, "reverse": 2, "alternate_forward": 5, "resource_capacity": 0, "base_hazard": 0.285, "tone": "rose", "brief": "高威胁航段，路线可能改写"},
+    {"id": 4, "name": "旧档案库", "short": "档案", "kind": "archive", "forward": 5, "reverse": 3, "alternate_forward": 5, "resource_capacity": 1, "base_hazard": 0.12, "tone": "violet", "brief": "可提取数据核心的遗迹"},
+    {"id": 5, "name": "伏击废墟", "short": "废墟", "kind": "ruins", "forward": 6, "reverse": 4, "alternate_forward": 6, "resource_capacity": 1, "base_hazard": 0.235, "tone": "orange", "brief": "可能有残骸，也可能有伏击"},
+    {"id": 6, "name": "冷却绿洲", "short": "绿洲", "kind": "relay", "forward": 7, "reverse": 5, "alternate_forward": 7, "resource_capacity": 0, "base_hazard": 0.07, "tone": "mint", "brief": "适合降低威胁的安全节点"},
+    {"id": 7, "name": "黑曜锻炉", "short": "锻炉", "kind": "resource", "forward": 8, "reverse": 6, "alternate_forward": 9, "resource_capacity": 2, "base_hazard": 0.19, "tone": "amber", "brief": "高收益但能量消耗很大的资源区"},
+    {"id": 8, "name": "深空裂隙", "short": "裂隙", "kind": "storm", "forward": 9, "reverse": 7, "alternate_forward": 9, "resource_capacity": 0, "base_hazard": 0.315, "tone": "rose", "brief": "持续损耗护盾的危险航段"},
+    {"id": 9, "name": "远古观测站", "short": "观测", "kind": "archive", "forward": 10, "reverse": 8, "alternate_forward": 11, "resource_capacity": 1, "base_hazard": 0.155, "tone": "violet", "brief": "稀有数据与版本线索的来源"},
+    {"id": 10, "name": "漂流矿场", "short": "矿场", "kind": "resource", "forward": 11, "reverse": 9, "alternate_forward": 11, "resource_capacity": 2, "base_hazard": 0.205, "tone": "gold", "brief": "资源丰富但回程距离较长"},
+    {"id": 11, "name": "暗流回廊", "short": "回廊", "kind": "ruins", "forward": 0, "reverse": 10, "alternate_forward": 0, "resource_capacity": 1, "base_hazard": 0.215, "tone": "indigo", "brief": "靠近星门的隐藏资源航线"}
+  ],
+  "actions": [
+    {"id": 0, "name": "向前航行", "short": "前进", "description": "沿当前航线前进一格，消耗少量能量。"},
+    {"id": 1, "name": "逆向返航", "short": "返航", "description": "沿反方向返回上一节点，适合调整路线。"},
+    {"id": 2, "name": "脉冲跃迁", "short": "跃迁", "description": "快速跨越两格，代价更高且更容易触发风暴。"},
+    {"id": 3, "name": "采集资源", "short": "采集", "description": "尝试从当前节点提取资源，结果受隐藏库存和版本影响。"},
+    {"id": 4, "name": "相位戒备", "short": "戒备", "description": "在危险区消耗能量恢复护盾，在星门或中继节点可补给，但会占用一个回合。"},
+    {"id": 5, "name": "扫描节点", "short": "扫描", "description": "消耗能量，获得当前节点资源与风险的局部信息。"},
+    {"id": 6, "name": "尝试撤离", "short": "撤离", "description": "携带足够资源回到星门后完成任务，否则会浪费行动。"}
+  ],
+  "scenarios": {
+    "stable": {"label": "稳定版本", "tag": "V0 → V0", "description": "环境动力学保持不变，用于 PPO 稳定训练和难度基线。"},
+    "storm_surge": {"label": "风暴潮汐", "tag": "hazard ↑", "description": "变化点后风暴概率与威胁增长显著上升，旧策略需要更多戒备。"},
+    "route_rewrite": {"label": "航线改写", "tag": "topology ↓", "description": "部分节点的前进出口改道，旧路线记忆不再可靠。"},
+    "resource_decay": {"label": "资源衰减", "tag": "yield ↓", "description": "资源产出下降，智能体必须调整采集顺序并减少无效往返。"},
+    "mixed_shift": {"label": "混合版本更新", "tag": "V0 → V1", "description": "同时改变风暴、戒备效率、资源产出和部分航线，是默认高难度场景。"},
+    "gradual_update": {"label": "渐进式更新", "tag": "continuous", "description": "多个动力学参数在较长区间内逐渐变化，考验在线适应和检测延迟。"}
+  }
+}
