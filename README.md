@@ -1,5 +1,7 @@
 # 星环守卫 · Non-Stationary Arena
 
+> **跨设备继续工作：**先阅读 `AGENT_HANDOFF.md` 和 `AGENTS.md`。前者包含当前研究状态、冻结参数、已验证结论、数据获取方式和下一步；后者包含新 agent 必须遵守的约束和检查命令。
+
 这是一个为毕业设计搭建的第一版游戏化非平稳强化学习仿真环境。智能体在 8 个区域组成的星环航线上，每一步选择两个动作之一：
 
 - `A0`：脉冲突击
@@ -232,6 +234,9 @@ calibrate_open_bandit_topk_null.py Top-K 安慰剂阈值校准
 run_open_bandit_semisynthetic.py 真实曝光背景下的已知变化注入
 inspect_open_bandit_features.py 用户特征基数审计
 inspect_open_bandit_application.py 真实数据动作支持审计
+requirements-analysis.txt 统计分析与绘图依赖
+AGENTS.md          新 agent 的项目约束与检查命令
+AGENT_HANDOFF.md   跨设备研究状态与下一步交接
 实验协议_v1.md      首轮均匀探索检测与调度记录
 实验协议_v2.md      PPO 主实验窗口和四组基线设置
 实验协议_v3.md      当前正式实验预算、探索和窗口协议
