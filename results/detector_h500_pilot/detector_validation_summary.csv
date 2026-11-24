@@ -1,0 +1,7 @@
+﻿scenario,window_size,runs,mean_true_impact,mean_estimated_impact,impact_mae,mean_ci_lower,mean_ci_upper,truth_low_rate,truth_high_rate,predicted_low_rate,predicted_high_rate,predicted_uncertain_rate,false_high_rate,missed_high_rate,evidence_match_rate,mean_reference_coverage,mean_recent_coverage,mean_unresolved_mass
+global_flip,500,3,1.0,1.0,0.0,0.8615499999999999,1.0,0.0,1.0,0.0,1.0,0.0,0.0,0.0,1.0,1.0,1.0,0.0
+gradual_flip,500,3,1.0,1.0,0.0,0.8615499999999999,1.0,0.0,1.0,0.0,1.0,0.0,0.0,0.0,1.0,1.0,1.0,0.0
+local_flip,500,3,0.24533333333333332,0.24533333333333332,0.0,0.10690000000000001,0.2854666666666667,0.0,0.0,0.0,0.0,1.0,0.0,0.0,1.0,1.0,1.0,0.0
+reward_shift,500,3,0.0,0.0,0.0,0.0,0.12651666666666664,1.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,1.0,1.0,0.037333333333333336
+stable,500,3,0.0,0.0,0.0,0.0,0.12651666666666664,1.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,1.0,1.0,0.037333333333333336
+transition_shift,500,3,0.118,0.082,0.036000000000000004,0.0,0.12771666666666667,1.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,1.0,0.9583333333333334,0.036

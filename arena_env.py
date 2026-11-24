@@ -19,6 +19,8 @@ import random
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
+import numpy as np
+
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_PROTOCOL_PATH = ROOT / "arena_protocol.json"
@@ -42,6 +44,7 @@ class NonStationaryArenaEnv:
         horizon: Optional[int] = None,
         seed: Optional[int] = None,
         protocol_path: Optional[str | Path] = None,
+        emit_oracle_info: bool = True,
     ) -> None:
         path = Path(protocol_path) if protocol_path else DEFAULT_PROTOCOL_PATH
         with path.open("r", encoding="utf-8") as file:
@@ -65,6 +68,7 @@ class NonStationaryArenaEnv:
         self.rng = random.Random()
         self.seed = seed if seed is not None else int(self.protocol["random_seed"])
         self.rng.seed(self.seed)
+        self.emit_oracle_info = bool(emit_oracle_info)
 
         self.global_step = 0
         self.episode_step = 0
@@ -217,6 +221,7 @@ class NonStationaryArenaEnv:
         self.total_return += reward
         self.global_step += 1
         self.episode_step += 1
+        episode_return = self.total_return
 
         terminated = False
         truncated = self.episode_step >= self.horizon
@@ -235,6 +240,7 @@ class NonStationaryArenaEnv:
                 "next_state": next_state,
                 "terminated": terminated,
                 "truncated": truncated,
+                "episode_return": float(episode_return),
             }
         )
         return self.state, reward, terminated, truncated, info
@@ -277,9 +283,7 @@ class NonStationaryArenaEnv:
         return [value / total for value in counts]
 
     def _info(self, event: str) -> Dict[str, Any]:
-        truth = self.decision_truth()
-        rewards, transitions = self.model_at()
-        return {
+        base = {
             "event": event,
             "scenario": self.scenario,
             "phase": self.phase_at(),
@@ -289,6 +293,13 @@ class NonStationaryArenaEnv:
             "episode_index": self.episode_index,
             "state": self.state,
             "environment_version": "V0" if self.phase_at() == "base" else "V1",
+        }
+        if not self.emit_oracle_info:
+            return base
+        truth = self.decision_truth()
+        rewards, transitions = self.model_at()
+        return {
+            **base,
             "rewards": rewards,
             "transitions": transitions,
             "q_values": self.true_q_values(),
@@ -337,35 +348,21 @@ def value_iteration(
     max_iterations: int = 10_000,
 ) -> List[List[float]]:
     """使用已知 ``R``、``P`` 精确近似最优动作价值 ``Q*``。"""
-    state_count = len(rewards)
-    action_count = len(rewards[0])
-    values = [0.0] * state_count
-    q_values = [[0.0] * action_count for _ in range(state_count)]
-
+    reward_array = np.asarray(rewards, dtype=np.float64)
+    transition_array = np.asarray(transitions, dtype=np.float64)
+    values = np.zeros(reward_array.shape[0], dtype=np.float64)
+    q_values = np.zeros_like(reward_array)
     for _ in range(max_iterations):
-        next_values = [0.0] * state_count
-        for state in range(state_count):
-            for action in range(action_count):
-                expected = sum(
-                    float(probability) * values[next_state]
-                    for next_state, probability in enumerate(transitions[state][action])
-                )
-                q_values[state][action] = float(rewards[state][action]) + gamma * expected
-            next_values[state] = max(q_values[state])
-        difference = max(abs(left - right) for left, right in zip(next_values, values))
+        q_values = reward_array + gamma * np.einsum("san,n->sa", transition_array, values)
+        next_values = np.max(q_values, axis=1)
+        difference = float(np.max(np.abs(next_values - values)))
         values = next_values
         if difference < tolerance:
             break
 
     # Recompute once against the converged V so callers receive a self-consistent Q table.
-    for state in range(state_count):
-        for action in range(action_count):
-            expected = sum(
-                float(probability) * values[next_state]
-                for next_state, probability in enumerate(transitions[state][action])
-            )
-            q_values[state][action] = float(rewards[state][action]) + gamma * expected
-    return q_values
+    q_values = reward_array + gamma * np.einsum("san,n->sa", transition_array, values)
+    return q_values.tolist()
 
 
 def greedy_actions(q_values: Sequence[Sequence[float]], tie_tolerance: float = 0.0) -> List[int]:
